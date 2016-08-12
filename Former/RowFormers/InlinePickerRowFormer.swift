@@ -68,24 +68,32 @@ public class InlinePickerRowFormer<T: UITableViewCell, S where T: InlinePickerFo
         
         if enabled {
             if isEditing {
-                if titleColor == nil { titleColor = titleLabel?.textColor }
-                _ = titleEditingColor.map { titleLabel?.textColor = $0 }
+                if self.titleEditingColor != nil {
+                    // store title color to restore after edit complete
+                    if titleColor == nil { titleColor = titleLabel?.textColor }
+                    // change color
+                    titleLabel?.textColor = self.titleEditingColor
+                }
                 
-                if pickerItems[selectedRow].displayTitle == nil {
-                    if displayTextColor == nil { displayTextColor = displayLabel?.textColor ?? .blackColor() }
-                    _ = displayEditingColor.map { displayLabel?.textColor = $0 }
+                if self.pickerItems[selectedRow].displayTitle == nil {
+                    if self.displayTextColor == nil { self.displayTextColor = displayLabel?.textColor ?? .blackColor() }
+                    if self.displayEditingColor != nil { displayLabel?.textColor = self.displayEditingColor }
                 }
             } else {
-                _ = titleColor.map { titleLabel?.textColor = $0 }
-                _ = displayTextColor.map { displayLabel?.textColor = $0 }
-                titleColor = nil
-                displayTextColor = nil
+                if self.titleColor != nil {
+                    titleLabel?.textColor = self.titleColor
+                    self.titleColor = nil
+                }
+                if self.displayTextColor != nil {
+                    displayLabel?.textColor = self.displayTextColor
+                    displayTextColor = nil
+                }
             }
         } else {
-            if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
-            titleLabel?.textColor = titleDisabledColor
-            if displayTextColor == nil { displayTextColor = displayLabel?.textColor ?? .blackColor() }
-            displayLabel?.textColor = displayDisabledColor
+            if self.titleColor == nil {self.titleColor = titleLabel?.textColor ?? .blackColor() }
+            titleLabel?.textColor = self.titleDisabledColor
+            if self.displayTextColor == nil { self.displayTextColor = displayLabel?.textColor ?? .blackColor() }
+            displayLabel?.textColor = self.displayDisabledColor
         }
         
         let inlineRowFormer = self.inlineRowFormer as! PickerRowFormer<InlineCellType, S>
@@ -93,7 +101,7 @@ public class InlinePickerRowFormer<T: UITableViewCell, S where T: InlinePickerFo
             $0.pickerItems = pickerItems
             $0.selectedRow = selectedRow
             $0.enabled = enabled
-            if UIDevice.currentDevice().systemVersion.compare("8.0.0", options: .NumericSearch) == .OrderedAscending {
+            if UIDevice.currentDevice().systemVersion.compare("8.0.0", options: .NumericSearch) == .OrderedDescending {
                 $0.cell.pickerView.reloadAllComponents()
             }
         }.onValueChanged(valueChanged).update()
@@ -105,15 +113,18 @@ public class InlinePickerRowFormer<T: UITableViewCell, S where T: InlinePickerFo
     
     public func editingDidBegin() {
         if enabled {
-            let titleLabel = cell.formTitleLabel()
-            let displayLabel = cell.formDisplayLabel()
+            if self.titleEditingColor != nil {
+                let titleLabel = cell.formTitleLabel()
+                // store title color to restore after edit complete
+                if titleColor == nil { titleColor = titleLabel?.textColor }
+                // change color
+                titleLabel?.textColor = self.titleEditingColor
+            }
             
-            if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
-            _ = titleEditingColor.map { titleLabel?.textColor = $0 }
-            
-            if pickerItems[selectedRow].displayTitle == nil {
-                if displayTextColor == nil { displayTextColor = displayLabel?.textColor ?? .blackColor() }
-                _ = displayEditingColor.map { displayLabel?.textColor = $0 }
+            if self.pickerItems[selectedRow].displayTitle == nil {
+                let displayLabel = cell.formDisplayLabel()
+                if self.displayTextColor == nil { self.displayTextColor = displayLabel?.textColor ?? .blackColor() }
+                if self.displayEditingColor != nil { displayLabel?.textColor = self.displayEditingColor }
             }
             isEditing = true
         }
@@ -125,18 +136,21 @@ public class InlinePickerRowFormer<T: UITableViewCell, S where T: InlinePickerFo
         let displayLabel = cell.formDisplayLabel()
         
         if enabled {
-            _ = titleColor.map { titleLabel?.textColor = $0 }
-            titleColor = nil
-            
-            if pickerItems[selectedRow].displayTitle == nil {
-                _ = displayTextColor.map { displayLabel?.textColor = $0 }
+            if self.titleColor != nil {
+                // restore previous title color if any
+                titleLabel?.textColor = self.titleColor
+                self.titleColor = nil
             }
-            displayTextColor = nil
+            
+            if self.pickerItems[selectedRow].displayTitle == nil && self.displayTextColor != nil {
+                displayLabel?.textColor = self.displayTextColor
+                self.displayTextColor = nil
+            }
         } else {
-            if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
-            if displayTextColor == nil { displayTextColor = displayLabel?.textColor ?? .blackColor() }
-            titleLabel?.textColor = titleDisabledColor
-            displayLabel?.textColor = displayDisabledColor
+            if self.titleColor == nil { self.titleColor = titleLabel?.textColor ?? .blackColor() }
+            if self.displayTextColor == nil { self.displayTextColor = displayLabel?.textColor ?? .blackColor() }
+            titleLabel?.textColor = self.titleDisabledColor
+            displayLabel?.textColor = self.displayDisabledColor
         }
     }
     

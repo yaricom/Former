@@ -44,9 +44,9 @@ public class TextFieldRowFormer<T: UITableViewCell where T: TextFieldFormableRow
         super.cellInitialized(cell)
         let textField = cell.formTextField()
         textField.delegate = observer
-        let events: [(Selector, UIControlEvents)] = [("textChanged:", .EditingChanged),
-            ("editingDidBegin:", .EditingDidBegin),
-            ("editingDidEnd:", .EditingDidEnd)]
+        let events: [(Selector, UIControlEvents)] = [(#selector(TextFieldRowFormer.textChanged(_:)), .EditingChanged),
+            (#selector(TextFieldRowFormer.editingDidBegin(_:)), .EditingDidBegin),
+            (#selector(TextFieldRowFormer.editingDidEnd(_:)), .EditingDidEnd)]
         events.forEach {
             textField.addTarget(self, action: $0.0, forControlEvents: $0.1)
         }
@@ -64,16 +64,17 @@ public class TextFieldRowFormer<T: UITableViewCell where T: TextFieldFormableRow
         textField.userInteractionEnabled = false
         
         if enabled {
-            if isEditing {
-                if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
-                _ = titleEditingColor.map { titleLabel?.textColor = $0 }
-            } else {
-                _ = titleColor.map { titleLabel?.textColor = $0 }
-                titleColor = nil
+            if self.titleColor != nil {
+                titleLabel?.textColor = self.titleColor
+                self.titleColor = nil
             }
-            _ = textColor.map { textField.textColor = $0 }
-            textColor = nil
+            
+            if self.textColor != nil {
+                textField.textColor = self.textColor
+                self.textColor = nil
+            }
         } else {
+            // set disabled colors
             if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
             if textColor == nil { textColor = textField.textColor ?? .blackColor() }
             titleLabel?.textColor = titleDisabledColor
@@ -81,7 +82,7 @@ public class TextFieldRowFormer<T: UITableViewCell where T: TextFieldFormableRow
         }
     }
     
-    public override func cellSelected(indexPath: NSIndexPath) {        
+    public override func cellSelected(indexPath: NSIndexPath) {
         let textField = cell.formTextField()
         if !textField.editing {
             textField.userInteractionEnabled = true
@@ -106,19 +107,29 @@ public class TextFieldRowFormer<T: UITableViewCell where T: TextFieldFormableRow
     }
     
     private dynamic func editingDidBegin(textField: UITextField) {
-        let titleLabel = cell.formTitleLabel()
-        if titleColor == nil { textColor = textField.textColor ?? .blackColor() }
-        _ = titleEditingColor.map { titleLabel?.textColor = $0 }
+        if self.titleEditingColor != nil {
+            // store title color to restore after edit complete
+            let titleLabel = cell.formTitleLabel()
+            if self.titleColor == nil {
+                self.titleColor = titleLabel?.textColor ?? .blackColor()
+            }
+            titleLabel?.textColor = self.titleEditingColor
+        }
     }
     
     private dynamic func editingDidEnd(textField: UITextField) {
         let titleLabel = cell.formTitleLabel()
         if enabled {
-            _ = titleColor.map { titleLabel?.textColor = $0 }
-            titleColor = nil
+            if self.titleColor != nil {
+                titleLabel?.textColor = self.titleColor
+                self.titleColor = nil
+            }
+            
         } else {
-            if titleColor == nil { titleColor = titleLabel?.textColor ?? .blackColor() }
-            _ = titleEditingColor.map { titleLabel?.textColor = $0 }
+            if self.titleColor == nil { self.titleColor = titleLabel?.textColor ?? .blackColor() }
+            if self.textColor == nil { self.textColor = textField.textColor ?? .blackColor() }
+            titleLabel?.textColor = titleDisabledColor
+            textField.textColor = textDisabledColor
         }
         cell.formTextField().userInteractionEnabled = false
     }
