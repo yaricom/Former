@@ -132,6 +132,9 @@ public class TextFieldRowFormer<T: UITableViewCell where T: TextFieldFormableRow
             textField.textColor = textDisabledColor
         }
         cell.formTextField().userInteractionEnabled = false
+        
+        // notify text changed due to possible changes with autocorrection
+        self.textChanged(textField)
     }
 }
 
